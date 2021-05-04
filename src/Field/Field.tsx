@@ -55,20 +55,8 @@ export default function Field() {
     const nowDate = new Date();
     const nowYear = nowDate.getFullYear();
     const nowMonth = nowDate.getMonth()+1;
-    let nowSeason = 1;
-    if(nowMonth <= 3){
-      //1~3月
-      nowSeason = 1;
-    }else if(nowMonth >= 4 && nowMonth <= 6){
-      //4~6月
-      nowSeason = 2;
-    }else if(nowMonth >= 7 && nowMonth <= 9){
-      //7~9月
-      nowSeason = 3;
-    }else if(nowMonth >= 10 && nowMonth <= 12){
-      //9~12月
-      nowSeason = 4;
-    }
+    //1~3月は1、4~6月は2、7~9月は3、10~12月は4
+    const nowSeason = Math.floor((nowMonth - 1) / 3) + 1;
 
     const [loading, setLoading] = useState<boolean>(true);
     const [animeData, setAnimeData] = useState<animeApiData[]>([]);
@@ -98,14 +86,12 @@ export default function Field() {
         animeData
             .forEach(
                 async elem => {
-                    let ogpData = await ogpGet(elem.public_url, control.signal);
+                    const ogpData = await ogpGet(elem.public_url, control.signal) ||
                     //描画中に年・クールを変更した時＝ogpGetをキャンセルした時、ogpDataはnullになるため初期化処理する。
-                    if (!ogpData){
-                         ogpData = {
+                        {
                             imgSrc: "",
                             description: ""
-                          };
-                    }
+                        };
                     const tmpArray:animeInfo = {
                         title: elem.title,
                         public_url: elem.public_url,
@@ -139,7 +125,7 @@ export default function Field() {
         setSeason(returnSeason);
     }
 
-    const ogpGet  = (url:string, signal: AbortSignal): Promise<ogpData> => {
+    const ogpGet  = (url:string, signal: AbortSignal): Promise<ogpData> | null => {
         const backendURL = `${process.env.REACT_APP_SERVER_URL}/getOgp`;
         const data = {reqURL: url};
         const ogpData =
@@ -150,15 +136,13 @@ export default function Field() {
                 },
                 body: JSON.stringify(data),
                 signal
-            })
+                })
                 .then((response:Response):object => response.json())
                 .catch((error) => {
                     console.error('Error:', error);
                     return null;
                 }) as Promise<ogpData>;
-        return new Promise((resolve, reject) => {
-            resolve(ogpData);
-        });
+        return ogpData;
     };
 
 
@@ -181,7 +165,7 @@ export default function Field() {
                                 //keyは不要だがエラーが出ないようにするために入れている。
                                 //https://ja.reactjs.org/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-uncontrolled-component-with-a-key
                                 key={index}
-                                img={anime.imgSrc}
+                                imgSrc={anime.imgSrc}
                                 title={anime.title}
                                 public_url={anime.public_url}
                                 description={anime.description}
