@@ -21,20 +21,28 @@ const useStyles = makeStyles((theme) => ({
 export default function SelectField(props:Props) {
   const classes = useStyles();
 
-  const yearChange = (event:React.ChangeEvent<HTMLInputElement>):void => {
-    props.settingYear(event.target.value:);
+  const yearChange = (event:React.ChangeEvent<HTMLSelectElement>):void => {
+    const selected = !Number.isNaN(Number(event.target.value)) ? (
+        //万が一数値にキャストできない値が入ってきた場合は以前の値にする。  
+          Number(event.target.value)
+        ):(
+          props.selectedYear
+        );
+    props.settingYear(selected);
   };
-  const seasonChange = (event) => {
-    props.settingSeason(event.target.value);
+  const seasonChange = (event:React.ChangeEvent<HTMLSelectElement>):void => {
+    const selected = !Number.isNaN(Number(event.target.value)) ? (
+          Number(event.target.value)
+        ):(
+          props.selectedSeason
+        );
+    props.settingSeason(selected);
   }; 
 
   //年の選択肢を自動で増やす処理。
-  let yearChoices = [];
   const apiStartYear = 2014;
-  for(let i = apiStartYear; i <= props.maxYear; i++){
-    yearChoices.push(i);
-  }
-  const yearChoicesComp = yearChoices.map((yearChoice, key) => 
+  const yearChoicesComp = [...Array(props.maxYear - apiStartYear + 1)].map(
+      (_,index) => index + apiStartYear).map((yearChoice, key) => 
       <option value={yearChoice} key={key}>{yearChoice}</option>
       )
 
